@@ -31,6 +31,16 @@ const proxyConf = proxyConfiguration
 // Helper to check if we reached the limit
 const checkLimit = () => reviewsCount >= results_wanted;
 
+// Prepare start URLs with correct labeling
+const processedStartUrls = startUrls.map(urlObj => {
+    const url = typeof urlObj === 'string' ? urlObj : urlObj.url;
+    // Check if it's a restaurant URL: opentable.com/r/slug or opentable.com/restref/rid
+    if (/\/r\/|\/restref\//i.test(url)) {
+        return { url, userData: { label: 'DETAIL' } };
+    }
+    return { url, userData: { label: 'SEARCH' } };
+});
+
 const crawler = new PlaywrightCrawler({
     launchContext: {
         launcher: firefox,
@@ -40,9 +50,9 @@ const crawler = new PlaywrightCrawler({
         userAgent: getRandomUserAgent(),
     },
     proxyConfiguration: proxyConf,
-    maxConcurrency: 2,
-    maxRequestRetries: 2,
-    requestHandlerTimeoutSecs: 180,
+    maxConcurrency: 1, // Lower for more stability and less 403
+    maxRequestRetries: 3,
+    requestHandlerTimeoutSecs: 300,
 
     preNavigationHooks: [
         async ({ page }) => {
@@ -55,7 +65,7 @@ const crawler = new PlaywrightCrawler({
                 const type = route.request().resourceType();
                 const url = route.request().url();
 
-                if (['image', 'font', 'media', 'stylesheet'].includes(type) ||
+                if (['image', 'font', 'media'].includes(type) ||
                     url.includes('google-analytics') ||
                     url.includes('googletagmanager') ||
                     url.includes('facebook') ||
@@ -73,13 +83,24 @@ const crawler = new PlaywrightCrawler({
         if (checkLimit()) return;
 
         log.info(`Processing: ${request.url}`);
+
+        // Auto-assign label if missing
+        if (!request.userData.label) {
+            if (/\/r\/|\/restref\//i.test(request.url)) {
+                request.userData.label = 'DETAIL';
+            } else {
+                request.userData.label = 'SEARCH';
+            }
+        }
+
         const label = request.userData.label;
 
-        // Wait for hydration
+        // Wait for page load
         try {
             await page.waitForLoadState('networkidle', { timeout: 30000 });
+            await page.waitForFunction(() => window.__INITIAL_STATE__, { timeout: 15000 });
         } catch (e) {
-            log.warning(`Network idle timeout on ${request.url}`);
+            log.warning(`Page initialization timeout on ${request.url}. Content might be missing.`);
         }
 
         if (label === 'DETAIL') {
@@ -125,16 +146,20 @@ async function handleSearch(page, request, enqueueLinks) {
 }
 
 async function handleDetail(page, request) {
-    // Extract reviews
+    // Extract restaurant and security data
     const data = await page.evaluate(() => {
         const state = window.__INITIAL_STATE__;
         if (!state || !state.restaurantProfile) return null;
+
+        // Find CSRF token if possible
+        const csrfToken = window.__csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || null;
+
         return {
             restaurantId: state.restaurantProfile.restaurant?.restaurantId,
             restaurantName: state.restaurantProfile.restaurant?.name,
             initialReviews: state.restaurantProfile.reviewsData?.reviewSearchResults?.reviews || [],
             totalCount: state.restaurantProfile.reviewsData?.reviewSearchResults?.totalCount || 0,
-            menuUrl: state.restaurantProfile.restaurant?.menuUrl,
+            csrfToken,
         };
     });
 
@@ -222,8 +247,7 @@ async function handleDetail(page, request) {
                         'content-type': 'application/json',
                         'ot-page-group': 'rest-profile',
                         'ot-page-type': 'restprofilepage',
-                        // x-csrf-token is usually handled by cookies or not strictly required for this read-only query in some contexts, 
-                        // but if needed we can try to find it. Usually playwight cookies suffice.
+                        'x-csrf-token': data.csrfToken || '', // Use the extracted token
                     },
                     body: JSON.stringify(body)
                 });
@@ -257,5 +281,5 @@ async function handleDetail(page, request) {
     }
 }
 
-await crawler.run(startUrls);
+await crawler.run(processedStartUrls);
 await Actor.exit();

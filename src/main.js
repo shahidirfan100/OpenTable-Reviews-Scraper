@@ -152,7 +152,12 @@ async function handleDetail(page, request) {
         if (!state || !state.restaurantProfile) return null;
 
         // Find CSRF token if possible
-        const csrfToken = window.__csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || null;
+        const csrfToken = window.__csrfToken ||
+            document.querySelector('meta[name="csrf-token"]')?.content ||
+            window._csrfToken ||
+            null;
+
+        console.log('OpenTable Scraper Debug: Detected CSRF Token:', csrfToken ? 'Yes' : 'No');
 
         return {
             restaurantId: state.restaurantProfile.restaurant?.restaurantId,

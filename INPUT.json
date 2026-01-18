@@ -1,10 +1,10 @@
 {
   "startUrls": [
     {
-      "url": "https://www.opentable.com/metro/los-angeles-restaurants"
+      "url": "https://www.opentable.com/r/bestia-los-angeles"
     }
   ],
-  "results_wanted": 20,
+  "results_wanted": 100,
   "max_reviews_per_restaurant": 100,
   "proxyConfiguration": {
     "useApifyProxy": true,

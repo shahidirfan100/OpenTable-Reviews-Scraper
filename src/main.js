@@ -13,11 +13,9 @@ const USER_AGENTS = [
 ];
 const getRandomUserAgent = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
-const input = (await Actor.getInput()) || {};
 const {
     startUrls = [],
     results_wanted = 20,
-    max_reviews_per_restaurant = 100,
     proxyConfiguration,
 } = input;
 
@@ -179,7 +177,8 @@ async function handleDetail(page, request) {
 
     let extracted = 0;
     const { restaurantName, restaurantId } = data;
-    const maxForThis = Math.min(max_reviews_per_restaurant, results_wanted - reviewsCount);
+    // Calculate how many we can take from this restaurant to not exceed global limit
+    const maxForThis = results_wanted - reviewsCount;
 
     // Process initial reviews
     const processReviews = async (reviews) => {

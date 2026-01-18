@@ -34,11 +34,13 @@ const checkLimit = () => reviewsCount >= results_wanted;
 // Prepare start URLs with correct labeling
 const processedStartUrls = startUrls.map(urlObj => {
     const url = typeof urlObj === 'string' ? urlObj : urlObj.url;
-    // Check if it's a restaurant URL: opentable.com/r/slug or opentable.com/restref/rid
-    if (/\/r\/|\/restref\//i.test(url)) {
-        return { url, userData: { label: 'DETAIL' } };
+    // Determine label based on URL pattern
+    // Search/Listing pages: /metro/, /s/ (search), /cityname-restaurants
+    if (/\/metro\/|\/s\/|(-restaurants$)/i.test(url)) {
+        return { url, userData: { label: 'SEARCH' } };
     }
-    return { url, userData: { label: 'SEARCH' } };
+    // Default to DETAIL for everything else (including /r/slug and clean slugs like /perch-la)
+    return { url, userData: { label: 'DETAIL' } };
 });
 
 const crawler = new PlaywrightCrawler({
@@ -84,12 +86,12 @@ const crawler = new PlaywrightCrawler({
 
         log.info(`Processing: ${request.url}`);
 
-        // Auto-assign label if missing
+        // Auto-assign label if missing (logic mirroring startUrl processing)
         if (!request.userData.label) {
-            if (/\/r\/|\/restref\//i.test(request.url)) {
-                request.userData.label = 'DETAIL';
-            } else {
+            if (/\/metro\/|\/s\/|(-restaurants$)/i.test(request.url)) {
                 request.userData.label = 'SEARCH';
+            } else {
+                request.userData.label = 'DETAIL';
             }
         }
 

@@ -13,6 +13,7 @@ const USER_AGENTS = [
 ];
 const getRandomUserAgent = () => USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
+const input = (await Actor.getInput()) || {};
 const {
     startUrls = [],
     results_wanted = 20,

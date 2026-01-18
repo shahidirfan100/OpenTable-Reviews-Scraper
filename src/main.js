@@ -226,7 +226,7 @@ async function handleDetail(page, request) {
         log.info(`Fetching review page ${pageNum} for ${restaurantName}`);
 
         try {
-            const responseData = await page.evaluate(async ({ rid, p, ps }) => {
+            const responseData = await page.evaluate(async ({ rid, p, ps, token }) => {
                 const body = {
                     operationName: "ReviewSearchResults",
                     variables: {
@@ -254,14 +254,14 @@ async function handleDetail(page, request) {
                         'content-type': 'application/json',
                         'ot-page-group': 'rest-profile',
                         'ot-page-type': 'restprofilepage',
-                        'x-csrf-token': data.csrfToken || '', // Use the extracted token
+                        'x-csrf-token': token || '', // Use the passed token
                     },
                     body: JSON.stringify(body)
                 });
 
                 if (!res.ok) return { error: res.status };
                 return await res.json();
-            }, { rid: restaurantId, p: pageNum, ps: pageSize });
+            }, { rid: restaurantId, p: pageNum, ps: pageSize, token: data.csrfToken });
 
             if (responseData.error) {
                 log.warning(`Failed to fetch page ${pageNum}: Status ${responseData.error}`);

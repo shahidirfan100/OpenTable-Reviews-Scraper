@@ -1,0 +1,51 @@
+{
+  "title": "OpenTable Reviews Scraper",
+  "description": "Scrape reviews from OpenTable restaurants. Provide a search URL to find restaurants or direct restaurant URLs.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "startUrls": {
+      "title": "Start URLs",
+      "type": "array",
+      "description": "List of OpenTable URLs (Search results or specific Restaurant pages) to scrape reviews from.",
+      "editor": "requestListSources",
+      "prefill": [
+        {
+          "url": "https://www.opentable.com/metro/los-angeles-restaurants"
+        }
+      ]
+    },
+    "results_wanted": {
+      "title": "Maximum number of reviews",
+      "type": "integer",
+      "description": "The maximum number of reviews to collect per run.",
+      "minimum": 1,
+      "default": 20,
+      "editor": "number"
+    },
+    "max_reviews_per_restaurant": {
+      "title": "Max reviews per restaurant",
+      "type": "integer",
+      "description": "Limit the number of reviews scraped per restaurant to save resources.",
+      "minimum": 1,
+      "default": 100,
+      "editor": "number"
+    },
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Use Apify Proxy for reliable scraping. Residential proxies are recommended.",
+      "editor": "proxy",
+      "default": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": [
+          "RESIDENTIAL"
+        ]
+      }
+    }
+  },
+  "required": [
+    "proxyConfiguration"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,53 @@
+{
+  "actorSpecification": 1,
+  "fields": {},
+  "views": {
+    "overview": {
+      "title": "Overview",
+      "transformation": {
+        "fields": [
+          "reviewId",
+          "restaurantName",
+          "rating",
+          "text",
+          "author",
+          "date",
+          "restaurantUrl"
+        ]
+      },
+      "display": {
+        "component": "table",
+        "properties": {
+          "reviewId": {
+            "label": "ID",
+            "format": "text"
+          },
+          "restaurantName": {
+            "label": "Restaurant",
+            "format": "text"
+          },
+          "rating": {
+            "label": "Rating",
+            "format": "number"
+          },
+          "text": {
+            "label": "Review",
+            "format": "text"
+          },
+          "author": {
+            "label": "Author",
+            "format": "text"
+          },
+          "date": {
+            "label": "Date",
+            "format": "date"
+          },
+          "restaurantUrl": {
+            "label": "URL",
+            "format": "link"
+          }
+        }
+      }
+    }
+  }
+}
